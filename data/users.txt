@@ -1,0 +1,4 @@
+name=Nikola
+username=NikolaJ
+password=lozinka
+
