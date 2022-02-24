@@ -26,7 +26,7 @@ class Course {
 	std::string name{};
 	std::size_t code{};
 	std::size_t credits{};
-	Department Department{};
+	Department department{};
 	std::vector<Rules> rules{};
 	std::vector<std::string> conditions{};
 	std::vector<std::string> teachers{};		 // list of teachers
@@ -34,6 +34,7 @@ class Course {
 	std::vector<std::string> pending_students{}; // list of students that haven't been accepted yet
 	std::vector<std::string> graduates{};		 // list of graduated students
 
-	public:
-	
+  public:
+	friend std::ostream& operator<<(std::ostream& os, Course const& course);
 };
+std::ostream& operator<<(std::ostream& os, Course const& course);

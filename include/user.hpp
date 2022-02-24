@@ -4,6 +4,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include "util.hpp"
 
 class User {
 	std::string name{};		// can be repeatable
@@ -15,11 +16,20 @@ class User {
 	std::vector<std::string> sent_requests{};	  // list of friend requests that the user has sent
 
   public:
+	User(std::string name, std::string username, std::string password, bool is_admin, std::vector<std::string> friends,
+		 std::vector<std::string> received_requests, std::vector<std::string> sent_requests);
 	void append_user(std::string const& path);
+
+	std::string get_username() const { return username; }
+
 	std::vector<User> read_users(std::string const& path);
 	bool send_friend_request(std::string const& username);
 	bool enroll_course(std::string const& code);
+	std::vector<std::string> get_friends();
+	bool is_friend(std::string const& user);
 
 	friend std::ostream& operator<<(std::ostream& os, User const& user);
+	friend std::ifstream& operator>>(std::ifstream& in, User const& user);
 };
 std::ostream& operator<<(std::ostream& os, User const& user);
+std::ifstream& operator>>(std::ifstream& in, User const& user);
