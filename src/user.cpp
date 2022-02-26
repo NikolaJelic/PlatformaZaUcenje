@@ -71,11 +71,61 @@ std::vector<User> User::read_users(std::string const& path) {
 	return users;
 }
 
-bool User::is_friend(std::string const& user) {
-	for (auto const& f : friends) {
+bool User::is_contained(std::string const& user, std::vector<std::string> const& list) {
+	for (auto const& f : list) {
 		if (f == user) {
 			return true;
 		}
 	}
 	return false;
+}
+
+// check if it is possible to send a request and then add to the received and pending requests of both users
+void User::send_friend_request(std::string const& username) {
+	auto users = read_users("data/users.txt");
+	for (auto& usr : users) {
+		if (usr.get_username() == username) {
+			if (!is_contained(usr.get_username(), usr.friends) &&
+				!is_contained(usr.get_username(), usr.received_requests)) {
+				usr.received_requests.push_back(this->username);
+				sent_requests.erase(std::find(sent_requests.begin(), sent_requests.end(), username));
+				usr.update_user("data/users.txt");
+				update_user("data/users.txt");
+				std::cout << "Friend request has been sent to " << username << std::endl;
+			}
+		}
+	}
+	std::cout << "Failed to send a friend request to " << username << std::endl;
+}
+
+void User::update_user(std::string const& path) {
+	std::vector<User> temp_users = read_users(path);
+	for (auto& user : temp_users) {
+		if (user.get_username() == username) {
+			user = *this;
+		}
+	}
+	if (auto file = std::ofstream(path)) {
+		for (auto const& user : temp_users) {
+			file << user << "=====\n";
+		}
+	} else {
+		std::cout << "File couldn't be opened.\n";
+	}
+}
+
+void User::accept_user(std::string const& username) {
+	if (is_contained(username, received_requests)) {
+		friends.push_back(username);
+		received_requests.erase(std::find(received_requests.begin(), received_requests.end(), username));
+		update_user("data/users.txt");
+		auto users = read_users("data/users.txt");
+		for (auto& usr : users) {
+			if (usr.get_username() == username) {
+				usr.sent_requests.erase(std::find(usr.sent_requests.begin(), usr.sent_requests.end(), this->username));
+				usr.update_user("data/users.txt");
+			}
+		}
+	}
+	std::cout << "User couldn't be accepted.\n";
 }

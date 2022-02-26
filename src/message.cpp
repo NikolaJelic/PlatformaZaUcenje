@@ -1,4 +1,5 @@
 #include "message.hpp"
+#include <filesystem>
 #include "util.hpp"
 
 Message::Message(std::string sender, std::string time, std::string message)
@@ -27,4 +28,14 @@ std::ostream& operator<<(std::ostream& os, Message const& message) {
 	os << message.sender << " | " << message.time << ":\n";
 	os << message.message << "\n";
 	return os;
+}
+
+void Message::print_chat(std::string const& chat) {
+	if (std::filesystem::exists(chat)) {
+		if (auto file = std::ifstream(chat)) {
+			std::cout << '\n' << file.rdbuf() << '\n';
+		}
+		std::cout << "File can't be opened.\n";
+	}
+	std::cout << "File can't be opened.\n";
 }

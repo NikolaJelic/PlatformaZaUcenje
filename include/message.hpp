@@ -19,6 +19,8 @@ class Message {
 	Message(std::string sender, std::string time, std::string message);
 	void send_message(User const& sender, User const& receiver);
 	static Message write_message(std::string const& sender);
+	// takes the path of the chat log 
+	static void print_chat(std::string const& chat);
 	friend std::ostream& operator<<(std::ostream& os, Message const& message);
 };
 

@@ -23,10 +23,11 @@ class User {
 	std::string get_username() const { return username; }
 
 	std::vector<User> read_users(std::string const& path);
-	bool send_friend_request(std::string const& username);
+	void send_friend_request(std::string const& username);
+	void accept_user(std::string const& username);
 	bool enroll_course(std::string const& code);
-	std::vector<std::string> get_friends();
-	bool is_friend(std::string const& user);
+	bool is_contained(std::string const& user, std::vector<std::string> const& list);
+	void update_user(std::string const& path);
 
 	friend std::ostream& operator<<(std::ostream& os, User const& user);
 	friend std::ifstream& operator>>(std::ifstream& in, User const& user);
