@@ -1,10 +1,12 @@
 #include "user.hpp"
 #include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <iostream>
 #include <ostream>
 #include <string>
 #include <vector>
+#include "course.hpp"
 #include "util.hpp"
 
 User::User(std::string name, std::string username, std::string password, bool is_admin,
@@ -128,4 +130,60 @@ void User::accept_user(std::string const& username) {
 		}
 	}
 	std::cout << "User couldn't be accepted.\n";
+}
+
+std::vector<std::string> User::list_teachers() const {
+	std::vector<Course> courses = Course::read_courses("data/courses.txt");
+	std::set<std::string> unq_teachers{};
+
+	for (auto course : courses) {
+		if (std::find(course.get_students().begin(), course.get_students().end(), username) !=
+			course.get_students().end()) {
+			for (auto teacher : course.get_teachers()) {
+				unq_teachers.insert(teacher);
+			}
+		}
+	}
+	return {unq_teachers.begin(), unq_teachers.end()};
+}
+
+void User::chat(std::string const& receiver) {
+	if (is_contained(receiver, friends) || is_contained(receiver, list_teachers())) {
+		Message::send_message(username, receiver);
+		std::cout << "Message to " << receiver << " has been sent." << std::endl;
+	}
+}
+
+std::vector<std::string> User::read_chats() const {
+	std::vector<std::string> ret{};
+	for (auto const& file : std::filesystem::directory_iterator("data/inbox")) {
+		if (file.path().filename().generic_string().find(username)) {
+			ret.push_back(file.path().filename().generic_string());
+		}
+	}
+	return ret;
+}
+
+void User::display_inbox() const {
+	auto inbox = read_chats();
+	for (size_t i = 0; i < inbox.size(); ++i) {
+		std::cout << i + 1 << ". " << get_recipient(inbox[i]) << std::endl;
+	}
+	
+}
+
+std::string User::get_recipient(std::string chat) const {
+	auto pos = chat.find(username);
+	if (pos != std::string::npos) {
+		chat.erase(pos, username.length());
+	}
+	pos = chat.find("_");
+	if (pos != std::string::npos) {
+		chat.erase(pos, 1);
+	}
+	pos = chat.find(".txt");
+	if (pos != std::string::npos) {
+		chat.erase(pos, 4);
+	}
+	return chat;
 }

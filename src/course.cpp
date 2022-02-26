@@ -1,6 +1,5 @@
 #include "course.hpp"
 
-
 Course::Course(std::string name, std::string code, std::size_t credits, Department department, std::vector<Rules> rules,
 			   std::vector<std::string> conditions, std::vector<std::string> teachers,
 			   std::vector<std::string> students, std::vector<std::string> pending_students,
@@ -116,4 +115,8 @@ void Course::accept_user(std::string const& requested_user, std::string const& u
 		pending_students.erase(it);
 		update_course("data/courses.txt");
 	}
+}
+
+bool Course::can_enroll(std::string const& user) const {
+	
 }
