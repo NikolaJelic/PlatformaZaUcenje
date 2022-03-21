@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <sstream>
 
+// TODO throw exceptions instead of printing errors
+
 std::vector<std::string> util::get_lines(const std::string& path) {
 	std::vector<std::string> ret;
 	std::string temp_line;
@@ -12,25 +14,21 @@ std::vector<std::string> util::get_lines(const std::string& path) {
 			ret.push_back(temp_line);
 		}
 	} else {
-		throw std::invalid_argument("File couldn't be opened");
+		std::cout << "File couldn't be opened\n";
 	}
 	return ret;
 }
 
 std::unordered_map<std::string, std::string> util::insert_pairs(std::vector<std::string> file_lines) {
 	std::unordered_map<std::string, std::string> key_value_pairs;
-	std::size_t line_number = 0;
 	for (const auto& str : file_lines) {
-		++line_number;
 		if (auto delimeter_pos = str.find('='); delimeter_pos != std::string::npos) {
 			std::string_view const key = trim_whitespace(str.substr(0, delimeter_pos));
 			if (key.empty()) {
 				throw std::invalid_argument("Key is empty");
 			} else {
 				std::string_view const value = trim_whitespace(str.substr(delimeter_pos + 1));
-				if (key[0] != '#') {
-					key_value_pairs.insert({std::string(key), std::string(value)});
-				}
+				key_value_pairs.insert({std::string(key), std::string(value)});
 			}
 		}
 	}
@@ -83,15 +81,11 @@ std::string util::get_datetime() {
 	return ss.str();
 }
 
-void util::create_file(std::string const& path) {
-	if (!std::filesystem::exists(path)) {
-	}
-}
-
 void util::extract_map(std::unordered_map<std::string, std::string> const& map, std::string const& key,
 					   std::string& value) {
 	auto it = map.find(key);
 	if (it == map.end()) {
+		value = {};
 		std::cout << "key couldn't be found.\n";
 	} else {
 		value = it->second;

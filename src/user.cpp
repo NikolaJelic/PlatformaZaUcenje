@@ -1,7 +1,9 @@
 #include "user.hpp"
 #include <cstddef>
 #include <cstdio>
+#include <exception>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -9,11 +11,10 @@
 #include "course.hpp"
 #include "util.hpp"
 
-User::User(std::string name, std::string username, std::string password, bool is_admin,
-		   std::vector<std::string> friends, std::vector<std::string> received_requests,
-		   std::vector<std::string> sent_requests)
-	: name(std::move(name)), username(std::move(username)), password(std::move(password)), is_admin(is_admin),
-	  friends(std::move(friends)), received_requests(std::move(received_requests)),
+User::User(std::string username, std::string password, bool is_admin, double grade, std::vector<std::string> friends,
+		   std::vector<std::string> friends_pending, std::vector<std::string> sent_requests)
+	: username(std::move(username)), password(std::move(password)), admin(is_admin), grade(grade),
+	  friends(std::move(friends)), friends_pending(std::move(friends_pending)),
 	  sent_requests(std::move(sent_requests)) {}
 
 void User::append_user(std::string const& path) {
@@ -27,47 +28,102 @@ void User::append_user(std::string const& path) {
 
 std::ostream& operator<<(std::ostream& os, User const& user) {
 	os << "username=" << user.username << '\n';
-	os << "name=" << user.name << '\n';
+
 	os << "password=" << user.password << '\n';
-	os << "admin=" << user.is_admin << '\n';
+	os << "admin=" << user.admin << '\n';
+	os << "grade=" << user.grade << '\n';
 	os << "friends=";
 	util::write_array(os, user.friends);
-	os << "received_requests=";
-	util::write_array(os, user.received_requests);
+	os << "friends_pending=";
+	util::write_array(os, user.friends_pending);
 	os << "sent_requests=";
 	util::write_array(os, user.sent_requests);
 
 	return os;
 }
 
+bool User::user_exists(std::vector<User> const& users, std::string const& username) {
+	bool ret = false;
+	if (username == "root") {
+		return true;
+	}
+	for (auto const& user : users) {
+		if (user.get_username() == username) {
+			ret = true;
+		}
+	}
+	return ret;
+}
+
+void User::create_user() {
+	std::cout << "Enter user info:\n";
+	std::string username{}, password{};
+
+	bool unique = false;
+
+	// load username until a unieuqe one has been entered
+	auto users = read_users("data/users.txt");
+	while (unique == false) {
+		std::cout << "Username(must be unique): ";
+		std::cin >> username;
+		unique = !user_exists(users, username);
+		if (!unique) {
+			std::cout << "\n Username must be unique!\n";
+		}
+	}
+	std::cout << "Password: ";
+	std::cin >> password;
+
+	User new_user{username, password, {}, {}, {}, {}, {}};
+	new_user.append_user("data/users.txt");
+}
+
+void User::delete_user(std::string const& username, bool is_admin) {
+	if (is_admin && username != "root") {
+		auto users = read_users("data/users.txt");
+
+		if (user_exists(users, username)) {
+			auto match_username = [username](User usr) { return usr.get_username() == username; };
+			users.erase(std::find_if(users.begin(), users.end(), match_username));
+		}
+		write_users(users, "data/users.txt");
+	}
+}
+
 std::vector<User> User::read_users(std::string const& path) {
 	std::vector<std::string> lines = util::get_lines(path);
+
 	std::vector<User> users{};
 	std::vector<std::string> user{};
 	for (auto const& line : lines) {
 		if (line != "=====") {
 			user.push_back(line);
-		} else {
+		} else if (user.size() == 6) { // checks for missing fields
+
 			// could use refactoring
 			auto temp = util::insert_pairs(user);
 			user = {};
 			std::string str{};
-			std::string name{}, username{}, password{};
-			std::vector<std::string> friends{}, received_requests{}, sent_requests{};
-			bool is_admin{};
-			util::extract_map(temp, "name", name);
+			std::string username{}, password{};
+			std::vector<std::string> friends{}, friends_pending{}, sent_requests{};
+			bool admin{};
+			double grade{};
 			util::extract_map(temp, "username", username);
 			util::extract_map(temp, "password", password);
 
 			util::extract_map(temp, "friends", str);
 			friends = util::parse_list(str, '|');
-			util::extract_map(temp, "received_requests", str);
-			friends = util::parse_list(str, '|');
+			util::extract_map(temp, "friends_pending", str);
+			friends_pending = util::parse_list(str, '|');
 			util::extract_map(temp, "sent_requests", str);
-			friends = util::parse_list(str, '|');
-			util::extract_map(temp, "is_admin", str);
-			is_admin = stoi(str);
-			users.push_back({name, username, password, is_admin, friends, received_requests, sent_requests});
+			sent_requests = util::parse_list(str, '|');
+			util::extract_map(temp, "admin", str);
+			admin = stoi(str);
+			util::extract_map(temp, "grade", str);
+			grade = stod(str);
+			users.push_back({username, password, admin, grade, friends, friends_pending, sent_requests});
+		} else {
+			user = {};
 		}
 	}
 	return users;
@@ -87,13 +143,17 @@ void User::send_friend_request(std::string const& username) {
 	auto users = read_users("data/users.txt");
 	for (auto& usr : users) {
 		if (usr.get_username() == username) {
-			if (!is_contained(usr.get_username(), usr.friends) &&
-				!is_contained(usr.get_username(), usr.received_requests)) {
-				usr.received_requests.push_back(this->username);
-				sent_requests.erase(std::find(sent_requests.begin(), sent_requests.end(), username));
+			if (!is_contained(this->username, usr.friends) && !is_contained(this->username, usr.friends_pending) &&
+				!is_contained(usr.username, this->sent_requests)) {
+				usr.friends_pending.push_back(this->username);
+				sent_requests.push_back(username);
 				usr.update_user("data/users.txt");
 				update_user("data/users.txt");
 				std::cout << "Friend request has been sent to " << username << std::endl;
+				return;
+			} else {
+				std::cout << "Failed to send a friend request to " << username << std::endl;
+				return;
 			}
 		}
 	}
@@ -107,8 +167,12 @@ void User::update_user(std::string const& path) {
 			user = *this;
 		}
 	}
+	write_users(temp_users, path);
+}
+
+void User::write_users(std::vector<User> const& users, std::string const& path) {
 	if (auto file = std::ofstream(path)) {
-		for (auto const& user : temp_users) {
+		for (auto const& user : users) {
 			file << user << "=====\n";
 		}
 	} else {
@@ -117,19 +181,22 @@ void User::update_user(std::string const& path) {
 }
 
 void User::accept_user(std::string const& username) {
-	if (is_contained(username, received_requests)) {
+	if (is_contained(username, friends_pending)) {
 		friends.push_back(username);
-		received_requests.erase(std::find(received_requests.begin(), received_requests.end(), username));
+		friends_pending.erase(std::find(friends_pending.begin(), friends_pending.end(), username));
 		update_user("data/users.txt");
 		auto users = read_users("data/users.txt");
 		for (auto& usr : users) {
 			if (usr.get_username() == username) {
+				usr.friends.push_back(this->username);
 				usr.sent_requests.erase(std::find(usr.sent_requests.begin(), usr.sent_requests.end(), this->username));
 				usr.update_user("data/users.txt");
 			}
+			std::cout << "Friend request accepted.\n";
 		}
+	} else {
+		std::cout << "User couldn't be accepted.\n";
 	}
-	std::cout << "User couldn't be accepted.\n";
 }
 
 std::vector<std::string> User::list_teachers() const {
@@ -154,36 +221,58 @@ void User::chat(std::string const& receiver) {
 	}
 }
 
-std::vector<std::string> User::read_chats() const {
-	std::vector<std::string> ret{};
-	for (auto const& file : std::filesystem::directory_iterator("data/inbox")) {
-		if (file.path().filename().generic_string().find(username)) {
-			ret.push_back(file.path().filename().generic_string());
+bool User::set_admin(std::string const& username, bool new_state) {
+	auto users = read_users("data/users.txt");
+	if (user_exists(users, username)) {
+		for (auto& user : users) {
+			if (user.get_username() == username) {
+				user.admin = new_state;
+				user.update_user("data/users.txt");
+				return true;
+			}
 		}
 	}
-	return ret;
+	return false;
 }
 
-void User::display_inbox() const {
-	auto inbox = read_chats();
-	for (size_t i = 0; i < inbox.size(); ++i) {
-		std::cout << i + 1 << ". " << get_recipient(inbox[i]) << std::endl;
+void User::update_password(std::string const& username) {
+	auto users = read_users("data/users.txt");
+	if (user_exists(users, username)) {
+		std::cout << "Enter new password: ";
+		std::string temp{};
+		std::cin >> temp;
+		for (auto& user : users) {
+			if (user.get_username() == username) {
+				user.password = temp;
+				user.update_user("data/users.txt");
+			}
+		}
 	}
-	
 }
 
-std::string User::get_recipient(std::string chat) const {
-	auto pos = chat.find(username);
-	if (pos != std::string::npos) {
-		chat.erase(pos, username.length());
+void User::login() {
+	std::cout << "Enter username: ";
+	std::string username{}, password{};
+	auto users = read_users("data/users.txt");
+	bool is_valid = false;
+	while (!is_valid) {
+		std::cin >> username;
+		if (username == "0") {
+			std::cout << "Login failed.\n";
+			return;
+		} else if (user_exists(users, username)) {
+			for (auto const& user : users) {
+				if (user.get_username() == username) {
+					std::cout << "Enter password: ";
+					std::cin >> password;
+					if (user.password == password) {
+						*this = user;
+						is_valid = true;
+						std::cout << "Login sucessfull.\n";
+					}
+				}
+			}
+		}
 	}
-	pos = chat.find("_");
-	if (pos != std::string::npos) {
-		chat.erase(pos, 1);
-	}
-	pos = chat.find(".txt");
-	if (pos != std::string::npos) {
-		chat.erase(pos, 4);
-	}
-	return chat;
+	std::cout << "Login failed.\n";
 }

@@ -1,0 +1,74 @@
+# Functions to test
+
+  - [x] write to array
+    - [x] array empty
+    - [x] array contains elements
+  
+  - [x] generate chat name
+
+
+- [ ] USERS
+  - [x] create new user
+  - [x] append user to file
+  - [ ] update specific user
+  - [ ] update multiple users
+  - [x] send friend request
+    - [x]  to valid user
+    - [x]  to a friend
+    - [x]  to someone already pending
+    - [x]  to someone that has sent a FR
+    - [x]  to a deleted user
+  - [ ] accept friend request (from deleted user) 
+  - [x] read users from file
+    - [x] file empty
+    - [x] file contains invalid users
+    - [x] user doesn't have arrays
+    - [x] user has arrays
+  - [ ] send message
+    - [x] to friend 
+    - [ ] to teacher
+    - [ ] to a teacher that is a friend
+  - [ ] enroll into course
+  - [ ] update password (nothing else can be updated)
+  - [ ] login 
+    - [ ] as user
+    - [ ] as admin
+    - [ ] as root (add default password)
+  
+- [ ] COURSES
+  - [ ] create new course + restrict to admins
+  - [ ] set teachers +  restrict to admins
+  - [ ] accept students + restrict to teachers
+  - [ ] update course
+    - [ ] file not found
+    - [ ] course has errors
+    - [ ] fields are empty
+  - [ ] read courses from file
+    - [ ] file not found
+    - [ ] file empty
+    - [ ] file corrupted/courses have bad info
+    - [ ] compare courses +  pass a flag for comparison value (enrolled or graduates)
+    - [ ] ***Check which aproval function is the proper one***
+  - [ ] Check rules for enrolling
+    - [ ] add new rules 
+    - [ ] assign a rule to the course
+    - [ ] edit rules in code
+    - [ ] what happens to the existing courses if a new rule is added
+    - [ ] enable adding new rules to existing courses
+
+- [ ] Messages
+  - [ ] read messages
+    - [ ]  no file found 
+    - [ ]  file is empty
+    - [ ]  messages are corrupt
+  - [ ] write a new message 
+    - [ ] person isn't a friend 
+    - [ ] is first message in chat
+  - [ ] send message
+  - [ ] read chat
+  - [ ] display chat (empty?)
+  - [ ] display inbox
+  - [ ] display eligable receivers for a message
+  - [ ] search and filter messages by keyword
+    - [ ] no message is find
+    - [ ] multiple messages from different users   

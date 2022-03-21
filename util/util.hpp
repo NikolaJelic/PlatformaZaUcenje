@@ -13,10 +13,14 @@ namespace util {
 
 template <typename T>
 std::ostream& write_array(std::ostream& os, std::vector<T> const& list) {
-	for (size_t i = 0; i < list.size() - 1; ++i) {
-		os << list[i] << '|';
+	if (!list.empty()) {
+
+		for (size_t i = 0; i < list.size() - 1; ++i) {
+			os << list[i] << '|';
+		}
+		os << list[list.size() - 1];
 	}
-	os << list[list.size() - 1] << '\n';
+	os << '\n';
 	return os;
 }
 
@@ -31,6 +35,5 @@ std::unordered_map<std::string, std::string> insert_pairs(std::vector<std::strin
 std::string generate_chat_name(std::string const& sender, std::string const& receiver);
 std::vector<std::string> parse_list(std::string list, char delim);
 std::string get_datetime();
-void create_file(std::string const& path);
 void extract_map(std::unordered_map<std::string, std::string> const& map, std::string const& key, std::string& value);
 } // namespace util
