@@ -9,6 +9,7 @@ Message::Message(std::string sender, std::string time, std::string message)
 void Message::send_message(std::string const& sender, std::string const& receiver) {
 	std::string chat_name = util::generate_chat_name(sender, receiver);
 	Message msg{};
+	std::cout << "Write message:\n";
 	msg.write_message(sender);
 	if (auto file = std::fstream("data/inbox/" + chat_name, std::ios::app)) {
 		file << msg << "-----------\n";
@@ -41,6 +42,7 @@ std::vector<Message> Message::read_messages(std::string const& path) {
 }
 
 void Message::write_message(std::string const& sender) {
+	std::cin.ignore();
 	std::getline(std::cin, message);
 	time = util::get_datetime();
 	this->sender = sender;

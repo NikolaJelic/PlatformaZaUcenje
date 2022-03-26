@@ -6,16 +6,17 @@
 #include "util.hpp"
 
 Course::Course(std::string name, std::string code, std::size_t credits, Department department, Rules rules,
-			   std::vector<std::string> teachers, std::vector<std::string> students,
-			   std::vector<std::string> pending_students, std::vector<std::string> graduates)
+			   std::vector<std::string> teachers, std::vector<std::string> students, std::vector<std::string> pending,
+			   std::vector<std::string> graduates)
 	: name(name), code(code), credits(credits), department(department), rules(std::move(rules)),
-	  teachers(std::move(teachers)), students(std::move(students)), pending_students(std::move(pending_students)),
+	  teachers(std::move(teachers)), students(std::move(students)), pending(std::move(pending)),
 	  graduates(std::move(graduates)) {}
 
 void Course::enroll_student(std::string const& student, double const& grade) {
 	if (can_enroll(student, grade)) {
-		pending_students.push_back(student);
+		pending.push_back(student);
 		update_course("data/courses.txt");
+		std::cout << "Request for enrollment has been sent.\n";
 	}
 }
 
@@ -38,8 +39,11 @@ void Course::update_course(std::string const& path) {
 // only admins can use this
 void Course::add_teacher(std::string const& teacher, bool is_admin) {
 	if (is_admin) {
-		teachers.push_back(teacher);
-		update_course("data/courses.txt");
+		if (std::find(teachers.begin(), teachers.end(), teacher) == teachers.end()) {
+			teachers.push_back(teacher);
+			update_course("data/courses.txt");
+			std::cout << "Teacher has been added.\n";
+		}
 	}
 }
 std::vector<Course> Course::read_courses(std::string const& path) {
@@ -58,7 +62,7 @@ std::vector<Course> Course::read_courses(std::string const& path) {
 			std::string name{}, code{};
 			Department department{};
 			Rules rules{};
-			std::vector<std::string> conditions{}, teachers{}, students{}, pending_students{}, graduates{};
+			std::vector<std::string> teachers{}, students{}, pending{}, graduates{};
 			util::extract_map(temp, "name", name);
 			util::extract_map(temp, "code", code);
 			util::extract_map(temp, "rules", str);
@@ -66,20 +70,18 @@ std::vector<Course> Course::read_courses(std::string const& path) {
 
 			util::extract_map(temp, "credits", str);
 			credits = stoi(str);
-			util::extract_map(temp, "conditions", str);
-			conditions = util::parse_list(str, '|');
+
 			util::extract_map(temp, "teachers", str);
 			teachers = util::parse_list(str, '|');
 			util::extract_map(temp, "students", str);
 			students = util::parse_list(str, '|');
-			util::extract_map(temp, "pending_students", str);
-			pending_students = util::parse_list(str, '|');
+			util::extract_map(temp, "pending", str);
+			pending = util::parse_list(str, '|');
 			util::extract_map(temp, "graduates", str);
 			graduates = util::parse_list(str, '|');
 			util::extract_map(temp, "department", str);
 			department = static_cast<Department>(stoi(str));
-			courses.push_back(
-				{name, code, credits, department, rules, teachers, students, pending_students, graduates});
+			courses.push_back({name, code, credits, department, rules, teachers, students, pending, graduates});
 		} else {
 			course = {};
 		}
@@ -90,12 +92,12 @@ std::vector<Course> Course::read_courses(std::string const& path) {
 void Course::accept_user(std::string const& requested_user, std::string const& username, bool is_admin) {
 	auto it = std::find(teachers.begin(), teachers.end(), username);
 	if (it != teachers.end() || is_admin) {
-		it = std::find(pending_students.begin(), pending_students.end(), requested_user);
-		if (it != pending_students.end()) {
+		it = std::find(pending.begin(), pending.end(), requested_user);
+		if (it != pending.end()) {
 			students.push_back(requested_user);
+			pending.erase(it);
+			update_course("data/courses.txt");
 		}
-		pending_students.erase(it);
-		update_course("data/courses.txt");
 	}
 }
 
@@ -177,24 +179,27 @@ void Course::append_course(std::string const& path) {
 	}
 }
 
-std::vector<std::string> Course::compare(std::string const& code, Comparison cmp) {
+std::vector<std::string> Course::compare(std::string const& code_first, std::string const& code_second, Comparison cmp,
+										 bool graduated) {
 	auto courses = read_courses("data/courses.txt");
-	std::vector<std::string> first = students;
-	std::sort(first.begin(), first.end());
 	std::vector<std::string> ret{};
-	std::vector<std::string> other{};
+	std::vector<std::string> first{}, second{};
 	for (auto const& course : courses) {
-		if (course.code == code) {
-			other = course.students;
-			std::sort(other.begin(), other.end());
+		if (course.code == code_first) {
+			first = graduated ? course.graduates : course.students;
+			std::sort(first.begin(), first.end());
+		}
+		if (course.code == code_second) {
+			second = graduated ? course.graduates : course.students;
+			std::sort(second.begin(), second.end());
 		}
 	}
 	if (cmp == Comparison::intersection) {
-		std::set_intersection(first.begin(), first.end(), other.begin(), other.end(), std::back_inserter(ret));
+		std::set_intersection(first.begin(), first.end(), second.begin(), second.end(), std::back_inserter(ret));
 	} else if (cmp == Comparison::difference) {
-		std::set_difference(first.begin(), first.end(), other.begin(), other.end(), std::back_inserter(ret));
+		std::set_difference(first.begin(), first.end(), second.begin(), second.end(), std::back_inserter(ret));
 	} else if (cmp == Comparison::group_union) {
-		std::set_union(first.begin(), first.end(), other.begin(), other.end(), std::back_inserter(ret));
+		std::set_union(first.begin(), first.end(), second.begin(), second.end(), std::back_inserter(ret));
 	}
 	return ret;
 }
@@ -204,14 +209,13 @@ std::ostream& operator<<(std::ostream& os, Course const& course) {
 	os << "code=" << course.code << '\n';
 	os << "credits=" << course.credits << '\n';
 	os << "department=" << util::enum_to_int(course.department) << '\n';
-
 	os << "rules=" << course.rules << '\n';
 	os << "teachers=";
 	util::write_array(os, course.teachers);
 	os << "students=";
 	util::write_array(os, course.students);
-	os << "pending_students=";
-	util::write_array(os, course.pending_students);
+	os << "pending=";
+	util::write_array(os, course.pending);
 	os << "graduates=";
 	util::write_array(os, course.graduates);
 
@@ -223,18 +227,19 @@ std::ostream& operator<<(std::ostream& os, Rules const& rules) {
 	if (rules.required_courses.size() == 0) {
 		os << "0|";
 	} else {
+		size_t i{};
 		for (auto r : rules.required_courses) {
-			os << r << ',';
+			os << r << ((i++ < rules.required_courses.size() - 1) ? "," : "");
 		}
+		os << "|";
 	}
-	os << "|";
 	os << rules.average_grade;
 	return os;
 }
 
 void Rules::read_rules(std::string const& str) {
 	auto rules_string = util::parse_list(str, '|');
-	if (rules_string.size() != 4) {
+	if (rules_string.size() != 3) {
 		*this = {};
 		return;
 	}
@@ -276,5 +281,53 @@ void Rules::input_rule() {
 			std::cin >> average_grade;
 			break;
 		}
+	}
+}
+
+void Course::list_courses() const {
+	auto courses = read_courses("data/courses.txt");
+	for (size_t i = 0; i < courses.size(); ++i) {
+		std::cout << i + 1 << ". " << courses[i].code << " | " << courses[i].name << '\n';
+	}
+}
+void Course::list_enrolled(std::string const& username) {
+	auto courses = read_courses("data/courses.txt");
+	size_t i = 1;
+
+	for (auto const& course : courses) {
+		if (std::find(course.students.begin(), course.students.end(), username) != course.students.end()) {
+			std::cout << i++ << ". " << course.code << " | " << course.name << '\n';
+		}
+	}
+}
+
+void Course::delete_course(std::string const& code) {
+	auto courses = read_courses("data/courses.txt");
+
+	if (course_exists(code)) {
+		auto match_code = [code](Course course) { return course.code == code; };
+		courses.erase(std::find_if(courses.begin(), courses.end(), match_code));
+	}
+	write_courses(courses, "data/courses.txt");
+}
+
+bool Course::course_exists(std::string const& code) {
+	auto courses = read_courses("data/courses.txt");
+	bool ret = false;
+	for (auto const& course : courses) {
+		if (course.code == code) {
+			ret = true;
+		}
+	}
+	return ret;
+}
+
+void Course::write_courses(std::vector<Course> const& courses, std::string const& path) {
+	if (auto file = std::ofstream(path)) {
+		for (auto const& course : courses) {
+			file << course << "=====\n";
+		}
+	} else {
+		std::cout << "File couldn't be opened.\n";
 	}
 }

@@ -44,9 +44,6 @@ std::ostream& operator<<(std::ostream& os, User const& user) {
 
 bool User::user_exists(std::vector<User> const& users, std::string const& username) {
 	bool ret = false;
-	if (username == "root") {
-		return true;
-	}
 	for (auto const& user : users) {
 		if (user.get_username() == username) {
 			ret = true;
@@ -78,13 +75,33 @@ void User::create_user() {
 	new_user.append_user("data/users.txt");
 }
 
-void User::delete_user(std::string const& username, bool is_admin) {
-	if (is_admin && username != "root") {
+void User::delete_user(std::string const& username) {
+	if (username != "root") {
 		auto users = read_users("data/users.txt");
 
 		if (user_exists(users, username)) {
-			auto match_username = [username](User usr) { return usr.get_username() == username; };
+			auto match_username = [username](User usr) { return usr.username == username; };
 			users.erase(std::find_if(users.begin(), users.end(), match_username));
+		}
+		for (auto& user : users) {
+			util::remove_from_list(user.friends, username);
+			util::remove_from_list(user.friends_pending, username);
+			util::remove_from_list(user.sent_requests, username);
+		}
+		auto courses = Course::read_courses("data/courses.txt");
+		for (auto& course : courses) {
+			auto students = course.get_students();
+			auto teachers = course.get_teachers();
+			auto pending = course.get_pending();
+			auto graduates = course.get_graduates();
+			util::remove_from_list(students, username);
+			util::remove_from_list(teachers, username);
+			util::remove_from_list(pending, username);
+			util::remove_from_list(graduates, username);
+			course.set_graduates(graduates);
+			course.set_students(students);
+			course.set_pending(pending);
+			course.set_teachers(teachers);
 		}
 		write_users(users, "data/users.txt");
 	}
@@ -98,7 +115,7 @@ std::vector<User> User::read_users(std::string const& path) {
 	for (auto const& line : lines) {
 		if (line != "=====") {
 			user.push_back(line);
-		} else if (user.size() == 6) { // checks for missing fields
+		} else if (user.size() == 7) { // checks for missing fields
 
 			// could use refactoring
 			auto temp = util::insert_pairs(user);
@@ -247,6 +264,8 @@ void User::update_password(std::string const& username) {
 				user.update_user("data/users.txt");
 			}
 		}
+	} else {
+		std::cout << "user hasn't been found.\n";
 	}
 }
 
@@ -267,12 +286,22 @@ void User::login() {
 					std::cin >> password;
 					if (user.password == password) {
 						*this = user;
-						is_valid = true;
 						std::cout << "Login sucessfull.\n";
+						return;
+					} else {
+						std::cout << "Incorrect password.\n";
+						return;
 					}
 				}
 			}
 		}
 	}
 	std::cout << "Login failed.\n";
+}
+
+void User::list_users() const {
+	auto users = read_users("data/users.txt");
+	for (size_t i = 0; i < users.size(); ++i) {
+		std::cout << i + 1 << ". " << users[i].username << '\n';
+	}
 }

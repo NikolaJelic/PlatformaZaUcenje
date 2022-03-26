@@ -1,0 +1,302 @@
+#include "interface.hpp"
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <vector>
+#include "course.hpp"
+#include "message.hpp"
+#include "util.hpp"
+
+void Screen::login() {
+	std::cout << "\nLOGIN SCREEN\n\n";
+	current_user.login();
+	if (!current_user.get_username().empty()) {
+		screen_state = ScreenState::home;
+	}
+}
+void Screen::home() {
+	std::cout << "\nHOME SCREEN\n\n";
+	std::cout << "0.Log out\n1.Users\n2.Courses\n3.Messages\n";
+	size_t selection{};
+	std::cout << "Input option: ";
+	std::cin >> selection;
+	switch (selection) {
+	case 0: screen_state = ScreenState::login; break;
+	case 1: screen_state = ScreenState::users; break;
+	case 2: screen_state = ScreenState::courses; break;
+	case 3: screen_state = ScreenState::messages; break;
+	}
+}
+void Screen::users() {
+	std::cout << "\nUSERS\n\n";
+	std::cout << "0.Back\n1.List friends\n2.Add friend\n3.Accept friend requests\n";
+	if (current_user.is_admin()) {
+		std::cout << "4.Create user\n5.Assign admin\n6.Delete user\n7.Edit user password\n";
+	}
+	size_t selection;
+	std::cout << "Input option: ";
+	std::cin >> selection;
+	switch (selection) {
+	case 0: screen_state = ScreenState::home; break;
+	case 1: util::print_list(current_user.get_friends()); break;
+	case 2: {
+		current_user.list_users();
+		std::string other{};
+		std::cout << "Enter username: ";
+		std::cin >> other;
+		current_user.send_friend_request(other);
+	} break;
+	case 3: {
+		util::print_list(current_user.get_friends_pending());
+		std::cout << "Input username you want to accept[empty string for quit selection]:";
+		std::string username{};
+		std::cin >> username;
+		if (!username.empty()) {
+			current_user.accept_user(username);
+		}
+	} break;
+	case 4: {
+		if (current_user.is_admin()) {
+			current_user.create_user();
+			break;
+		}
+	}
+	case 5: {
+		if (current_user.is_admin()) {
+			current_user.list_users();
+			bool new_state{};
+			std::string username{};
+			size_t bool_int{};
+			std::cout << "Input username you want to accept[empty string for quit selection]:";
+			std::cin >> username;
+			if (!username.empty()) {
+
+				std::cout << "Input new state [0 = remove admin | else = assign admin]: ";
+				std::cin >> bool_int;
+				if (!bool_int) {
+					new_state = false;
+				} else {
+					new_state = true;
+				}
+				current_user.set_admin(username, new_state);
+			}
+		}
+	} break;
+	case 6: {
+		if (current_user.is_admin()) {
+			current_user.list_users();
+			std::string username{};
+			std::cout << "Input username you want to delete[empty string for quit selection]:";
+			std::cin >> username;
+			if (!username.empty()) {
+				current_user.delete_user(username);
+			}
+		}
+	} break;
+	case 7: {
+		if (current_user.is_admin()) {
+			current_user.list_users();
+			std::string username{};
+			std::cout << "Input username you want to edit password for[empty string for quit selection]:";
+			std::cin >> username;
+			if (!username.empty()) {
+				current_user.update_password(username);
+			}
+		}
+	} break;
+	}
+}
+void Screen::courses() {
+	Course viewed_course{};
+	std::cout << "\nCOURSES\n\n";
+	std::cout << "0.Back\n1.View all courses\n2.View enrolled courses\n3.Enroll into course\n";
+	if (current_user.is_admin()) {
+		std::cout
+			<< "4.Create new course\n5.Delete course\n6.Add teacher to course\n7.Accept student\n8.Compare courses\n";
+	}
+
+	size_t selection;
+	std::cout << "Input option: ";
+	std::cin >> selection;
+	switch (selection) {
+	case 0: screen_state = ScreenState::home; break;
+	case 1: viewed_course.list_courses(); break;
+	case 2: Course::list_enrolled(current_user.get_username()); break;
+	case 3: {
+		viewed_course.list_courses();
+		std::string code{};
+		std::cout << "Input course code you want to atend[empty string for quit selection]:";
+		std::cin >> code;
+		if (!code.empty()) {
+			auto courses = Course::read_courses("data/courses.txt");
+			for (auto& course : courses) {
+				if (course.get_code() == code) {
+					course.enroll_student(current_user.get_username(), current_user.get_grade());
+					break;
+				}
+			}
+		
+		}
+	} break;
+	case 4: {
+		if (current_user.is_admin()) {
+			Course::create_course(current_user.is_admin());
+		}
+	} break;
+	case 5: {
+		if (current_user.is_admin()) {
+
+			viewed_course.list_courses();
+			std::string code{};
+			std::cout << "Input course code you want to delete[empty string for quit selection]:";
+			std::cin >> code;
+			if (!code.empty()) {
+				auto courses = Course::read_courses("data/courses.txt");
+				for (auto& course : courses) {
+					if (course.get_code() == code) {
+						Course::delete_course(code);
+						std::cout << "Course has been deleted.\n";
+						break;
+					}
+				}
+			}
+		}
+	} break;
+	case 6: {
+		if (current_user.is_admin()) {
+			viewed_course.list_courses();
+			std::cout << "Enter the code of the course you want to assign a teacher to:";
+			std::string code{};
+			std::cin >> code;
+			if (!code.empty()) {
+				auto courses = Course::read_courses("data/courses.txt");
+				for (auto& course : courses) {
+					if (course.get_code() == code) {
+						current_user.list_users();
+						std::string username{};
+						std::cout << "Enter username of the teacher you wish to assign: ";
+						std::cin >> username;
+						auto users = User::read_users("data/users.txt");
+						if (User::user_exists(users, username)) {
+							course.add_teacher(username, current_user.is_admin());
+						} else {
+							std::cout << "User doesn't exist.\n";
+						}
+					}
+				}
+			}
+		}
+	} break;
+	case 7: {
+		auto courses = Course::read_courses("data/courses.txt");
+		std::vector<Course> selected_courses{};
+		std::vector<std::string> teachers{};
+		for (auto const& course : courses) {
+			teachers = course.get_teachers();
+
+			if (std::find(teachers.begin(), teachers.end(), current_user.get_username()) != teachers.end()) {
+				selected_courses.push_back(course);
+				std::cout << "=> " << course.get_code() << " | " << course.get_name() << '\n';
+			}
+		}
+		std::string code{};
+		std::cout << "Enter the code of the course you want to approve enrollment for:";
+		std::cin >> code;
+		if (!code.empty()) {
+			for (auto& course : selected_courses) {
+				if (course.get_code() == code) {
+					std::string username{};
+					util::print_list(course.get_pending());
+					std::cout << "Enter username of the student you wish to enroll: ";
+					std::cin >> username;
+					if (!username.empty()) {
+						course.accept_user(username, current_user.get_username(), current_user.is_admin());
+					}
+				}
+			}
+		}
+	} break;
+	case 8: {
+		viewed_course.list_courses();
+		std::string code_first{}, code_second;
+		std::cout << "Enter the code of the first course :";
+		std::cin >> code_first;
+		std::cout << "Enter the code of the second course :";
+		std::cin >> code_second;
+		if (!code_first.empty() && !code_second.empty()) {
+			std::cout << "Comparison type:\n0.Back\n1.Union\n2.Intersection\n3.Difference\nInput: ";
+			int selection{};
+			std::cin >> selection;
+			std::cout << "Current[0] or graduated users[else]: ";
+			size_t option{};
+			std::cin >> option;
+			bool graduated = option;
+			switch (selection) {
+			case 1:
+				util::print_list(viewed_course.compare(code_first, code_second, Comparison::group_union, graduated));
+				break;
+			case 2:
+				util::print_list(viewed_course.compare(code_first, code_second, Comparison::intersection, graduated));
+				break;
+			case 3:
+				util::print_list(viewed_course.compare(code_first, code_second, Comparison::difference, graduated));
+				break;
+			}
+		}
+	}
+	}
+}
+void Screen::messages() {
+	std::cout << "\nMESSAGES\n\n";
+	std::cout << "0.Return\n1.Inbox\n2.New message\n3.Search\n";
+	size_t selection{};
+	Message temp_message{};
+	std::cout << "Input option: ";
+	std::cin >> selection;
+	switch (selection) {
+	case 0: screen_state = ScreenState::home; break;
+	case 1: {
+		std::cout << "\nINBOX:\n";
+		temp_message.display_inbox(current_user.get_username());
+
+	} break;
+	case 2: {
+		auto teachers = current_user.list_teachers();
+		auto friends = current_user.get_friends();
+		std::sort(friends.begin(), friends.end());
+		std::sort(teachers.begin(), teachers.end());
+		std::vector<std::string> available_chats{};
+		std::set_union(teachers.begin(), teachers.end(), friends.begin(), friends.end(),
+					   std::back_inserter(available_chats));
+		for (auto const& chat : available_chats) {
+			if (!chat.empty() && chat != current_user.get_username()) {
+				std::cout << "=> " << chat << '\n';
+			}
+		}
+		std::string username{};
+		std::cout << "Input username: ";
+		std::cin >> username;
+		if (!username.empty()) {
+			current_user.chat(username);
+		}
+	} break;
+	case 3: {
+		std::string key{};
+		std::cout << "Input keywoard you want to search for: ";
+		std::cin >> key;
+		if (!key.empty()) {
+			temp_message.search(key, current_user.get_username());
+		}
+	} break;
+	}
+}
+
+void Screen::run() {
+	switch (screen_state) {
+	case ScreenState::login: login(); break;
+	case ScreenState::home: home(); break;
+	case ScreenState::courses: courses(); break;
+	case ScreenState::messages: messages(); break;
+	case ScreenState::users: users(); break;
+	}
+}

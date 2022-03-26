@@ -6,6 +6,14 @@
 
 // TODO throw exceptions instead of printing errors
 
+void util::print_list(std::vector<std::string> const& list) {
+	for (size_t i = 0; i < list.size(); ++i) {
+		if (!list[i].empty()) {
+			std::cout << "=> " << list[i] << '\n';
+		}
+	}
+}
+
 std::vector<std::string> util::get_lines(const std::string& path) {
 	std::vector<std::string> ret;
 	std::string temp_line;
@@ -27,8 +35,7 @@ std::unordered_map<std::string, std::string> util::insert_pairs(std::vector<std:
 			if (key.empty()) {
 				throw std::invalid_argument("Key is empty");
 			} else {
-				std::string_view const value = trim_whitespace(str.substr(delimeter_pos + 1));
-				key_value_pairs.insert({std::string(key), std::string(value)});
+				key_value_pairs.insert({std::string(key), str.substr(delimeter_pos + 1)});
 			}
 		}
 	}
@@ -86,8 +93,17 @@ void util::extract_map(std::unordered_map<std::string, std::string> const& map, 
 	auto it = map.find(key);
 	if (it == map.end()) {
 		value = {};
-		std::cout << "key couldn't be found.\n";
+		std::cout << key << " key couldn't be found.\n";
 	} else {
 		value = it->second;
+	}
+}
+
+void util::remove_from_list(std::vector<std::string>& list, std::string const& username) {
+	if (!list.empty()) {
+		auto it = std::find(list.begin(), list.end(), username);
+		if (it != list.end()) {
+			list.erase(it);
+		}
 	}
 }
