@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
+#include <vector>
 #include "util.hpp"
 
 Course::Course(std::string name, std::string code, std::size_t credits, Department department, Rules rules,
@@ -12,12 +13,11 @@ Course::Course(std::string name, std::string code, std::size_t credits, Departme
 	  teachers(std::move(teachers)), students(std::move(students)), pending(std::move(pending)),
 	  graduates(std::move(graduates)) {}
 
-void Course::enroll_student(std::string const& student, double const& grade) {
-	if (can_enroll(student, grade)) {
-		pending.push_back(student);
-		update_course("data/courses.txt");
-		std::cout << "Request for enrollment has been sent.\n";
-	}
+void Course::enroll_student(std::string const& student) {
+
+	pending.push_back(student);
+	update_course("data/courses.txt");
+	std::cout << "Request for enrollment has been sent.\n";
 }
 
 void Course::update_course(std::string const& path) {
@@ -131,43 +131,6 @@ void Course::create_course(bool is_admin) {
 	} else {
 		std::cout << "User isn't admin.\n";
 	}
-}
-
-bool Course::can_enroll(std::string const& username, double grade) const {
-	bool num_courses = true;
-	bool min_grade = true;
-	bool req_courses = true; // sets to false if it isn't found
-
-	auto courses = read_courses("data/courses.txt"); // TODO STORE NUMBER OF COURSES IN THE USER
-	if (rules.num_of_courses_passed > 0) {
-		size_t counter{};
-		for (auto const& course : courses) {
-			if (std::find(course.graduates.begin(), course.graduates.end(), username) != course.graduates.end()) {
-				++counter;
-			}
-		}
-		if (counter < rules.num_of_courses_passed) {
-			num_courses = false;
-		}
-	}
-	if (rules.average_grade > 0) {
-		if (grade < rules.average_grade) {
-			min_grade = false;
-		}
-	}
-
-	if (!rules.required_courses.empty()) {
-		for (auto const& course : courses) {
-			if (std::find(rules.required_courses.begin(), rules.required_courses.end(), course.code) !=
-				rules.required_courses.end()) {
-				if (std::find(course.graduates.begin(), course.graduates.end(), username) == course.graduates.end()) {
-					req_courses = false;
-				}
-			}
-		}
-	}
-
-	return (num_courses && min_grade && req_courses);
 }
 
 void Course::append_course(std::string const& path) {
@@ -330,4 +293,25 @@ void Course::write_courses(std::vector<Course> const& courses, std::string const
 	} else {
 		std::cout << "File couldn't be opened.\n";
 	}
+}
+
+std::pair<std::string, size_t> Course::pass_student(std::string const& username) {
+	auto it = std::find(students.begin(), students.end(), username);
+	if (it != students.end()) {
+		std::cout << "Input studen't grade[6 - 10]: ";
+		size_t grade{};
+		std::cin >> grade;
+		if (grade >= 6 && grade <= 10) {
+			students.erase(it);
+			graduates.push_back(username);
+			update_course("data/courses.txt");
+			std::cout << "Studen't passed " << name << " with " << grade << ".\n";
+			return {code, grade};
+		} else {
+			return {code, 0};
+		}
+	} else {
+		std::cout << "Studen't not found.\n";
+	}
+	return {code, 0};
 }

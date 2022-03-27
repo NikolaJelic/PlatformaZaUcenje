@@ -3,10 +3,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <fstream>
+#include <set>
 #include <string>
 #include <vector>
-//#include "user.hpp"
-#include <set>
 #include "util.hpp"
 
 // Needs to be moved to Utils
@@ -62,6 +61,7 @@ class Course {
 	std::vector<std::string> get_students() const { return students; }
 	std::vector<std::string> get_pending() const { return pending; }
 	std::vector<std::string> get_graduates() const { return graduates; }
+	Rules get_rules() const { return rules; }
 
 	void set_teachers(std::vector<std::string> other) { teachers = other; }
 	void set_students(std::vector<std::string> other) { students = other; }
@@ -72,18 +72,18 @@ class Course {
 	static void create_course(bool is_admin);
 	static void delete_course(std::string const& code);
 	void update_course(std::string const& path);
-	bool can_enroll(std::string const& username, double grade) const;
 	void add_teacher(std::string const& teacher, bool is_admin);
 	static std::vector<Course> read_courses(std::string const& path);
 
 	void list_courses() const;
 	// prints out courses the given user is enrolled into
 	static void list_enrolled(std::string const& username);
+	std::pair<std::string, size_t> pass_student(std::string const& username);
 
 	static std::vector<std::string> compare(std::string const& code_first, std::string const& code_second,
 											Comparison cmp, bool graduated);
 	// add student to the list of pending students
-	void enroll_student(std::string const& student, double const& grade);
+	void enroll_student(std::string const& student);
 	// teacher approves student enrollment
 	void accept_user(std::string const& requested_user, std::string const& username, bool is_admin);
 	friend std::ostream& operator<<(std::ostream& os, Course const& course);

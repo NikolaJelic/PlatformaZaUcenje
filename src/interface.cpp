@@ -111,8 +111,8 @@ void Screen::courses() {
 	std::cout << "\nCOURSES\n\n";
 	std::cout << "0.Back\n1.View all courses\n2.View enrolled courses\n3.Enroll into course\n";
 	if (current_user.is_admin()) {
-		std::cout
-			<< "4.Create new course\n5.Delete course\n6.Add teacher to course\n7.Accept student\n8.Compare courses\n";
+		std::cout << "4.Create new course\n5.Delete course\n6.Add teacher to course\n7.Accept student\n8.Compare "
+					 "courses\n9.Pass student\n";
 	}
 
 	size_t selection;
@@ -130,12 +130,11 @@ void Screen::courses() {
 		if (!code.empty()) {
 			auto courses = Course::read_courses("data/courses.txt");
 			for (auto& course : courses) {
-				if (course.get_code() == code) {
-					course.enroll_student(current_user.get_username(), current_user.get_grade());
+				if (course.get_code() == code && current_user.can_enroll(course)) {
+					course.enroll_student(current_user.get_username());
 					break;
 				}
 			}
-		
 		}
 	} break;
 	case 4: {
@@ -241,6 +240,44 @@ void Screen::courses() {
 			case 3:
 				util::print_list(viewed_course.compare(code_first, code_second, Comparison::difference, graduated));
 				break;
+			}
+		}
+	} break;
+	case 9: {
+		auto courses = Course::read_courses("data/courses.txt");
+		std::vector<Course> selected_courses{};
+		std::vector<std::string> teachers{};
+		for (auto const& course : courses) {
+			teachers = course.get_teachers();
+
+			if (std::find(teachers.begin(), teachers.end(), current_user.get_username()) != teachers.end()) {
+				selected_courses.push_back(course);
+				std::cout << "=> " << course.get_code() << " | " << course.get_name() << '\n';
+			}
+		}
+		std::string code{};
+		std::cout << "Enter the code of the course you want to pass student in:";
+		std::cin >> code;
+		if (!code.empty()) {
+			for (auto& course : selected_courses) {
+				if (course.get_code() == code) {
+					std::string username{};
+					util::print_list(course.get_students());
+					std::cout << "Enter username of the student you wish to pass: ";
+					std::cin >> username;
+					if (!username.empty()) {
+						auto grade = course.pass_student(username);
+						if (grade.second) {
+							auto users = User::read_users("data/users.txt");
+							for (auto& user : users) {
+								if (user.get_username() == username) {
+									user.add_grade(grade);
+									user.write_users(users, "data/users.txt");
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}

@@ -11,9 +11,10 @@
 #include "course.hpp"
 #include "util.hpp"
 
-User::User(std::string username, std::string password, bool is_admin, double grade, std::vector<std::string> friends,
+User::User(std::string username, std::string password, bool is_admin,
+		   std::vector<std::pair<std::string, size_t>> grades, std::vector<std::string> friends,
 		   std::vector<std::string> friends_pending, std::vector<std::string> sent_requests)
-	: username(std::move(username)), password(std::move(password)), admin(is_admin), grade(grade),
+	: username(std::move(username)), password(std::move(password)), admin(is_admin), grades(grades),
 	  friends(std::move(friends)), friends_pending(std::move(friends_pending)),
 	  sent_requests(std::move(sent_requests)) {}
 
@@ -31,7 +32,11 @@ std::ostream& operator<<(std::ostream& os, User const& user) {
 
 	os << "password=" << user.password << '\n';
 	os << "admin=" << user.admin << '\n';
-	os << "grade=" << user.grade << '\n';
+	os << "grades=";
+	for (size_t i = 0; i < user.grades.size() - 1; ++i) {
+		os << user.grades[i].first << ',' << user.grades[i].second << '|';
+	}
+	os << user.grades[user.grades.size() - 1].first << ',' << user.grades[user.grades.size() - 1].second << std::endl;
 	os << "friends=";
 	util::write_array(os, user.friends);
 	os << "friends_pending=";
@@ -124,7 +129,7 @@ std::vector<User> User::read_users(std::string const& path) {
 			std::string username{}, password{};
 			std::vector<std::string> friends{}, friends_pending{}, sent_requests{};
 			bool admin{};
-			double grade{};
+			std::vector<std::pair<std::string, size_t>> grades{};
 			util::extract_map(temp, "username", username);
 			util::extract_map(temp, "password", password);
 
@@ -136,9 +141,15 @@ std::vector<User> User::read_users(std::string const& path) {
 			sent_requests = util::parse_list(str, '|');
 			util::extract_map(temp, "admin", str);
 			admin = stoi(str);
-			util::extract_map(temp, "grade", str);
-			grade = stod(str);
-			users.push_back({username, password, admin, grade, friends, friends_pending, sent_requests});
+			util::extract_map(temp, "grades", str);
+			auto grade_list = util::parse_list(str, '|');
+			for (auto const& g : grade_list) {
+				if (!g.empty()) {
+					auto temp = util::parse_list(g, ',');
+					grades.push_back({temp[0], std::stoi(temp[1])});
+				}
+			}
+			users.push_back({username, password, admin, grades, friends, friends_pending, sent_requests});
 		} else {
 			user = {};
 		}
@@ -304,4 +315,46 @@ void User::list_users() const {
 	for (size_t i = 0; i < users.size(); ++i) {
 		std::cout << i + 1 << ". " << users[i].username << '\n';
 	}
+}
+
+double User::calculate_grade() const {
+	double sum{};
+	size_t number_of_courses{};
+	for (auto const& g : grades) {
+		sum += g.second;
+		++number_of_courses;
+	}
+	return sum / number_of_courses;
+}
+
+bool User::can_enroll(Course const& course) const {
+	bool num_courses = true;
+	bool min_grade = true;
+	bool req_courses = true; // sets to false if it isn't found
+	auto rules = course.get_rules();
+	if (rules.num_of_courses_passed > 0) {
+
+		if (grades.size() < rules.num_of_courses_passed) {
+			num_courses = false;
+		}
+	}
+	if (rules.average_grade > 0) {
+		if (calculate_grade() < rules.average_grade) {
+			min_grade = false;
+		}
+	}
+
+	if (!rules.required_courses.empty()) {
+		std::vector<std::string> passed_courses{};
+		for (auto const& [c, g] : grades) {
+			passed_courses.push_back(c);
+		}
+		for (auto const& c : rules.required_courses) {
+			if (std::find(passed_courses.begin(), passed_courses.end(), c) == passed_courses.end()) {
+				req_courses = false;
+			}
+		}
+	}
+
+	return (num_courses && min_grade && req_courses);
 }

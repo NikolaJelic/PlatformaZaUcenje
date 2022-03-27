@@ -17,7 +17,6 @@ int main() {
 		tiho.append_user("data/users.txt");
 		igor.append_user("data/users.txt");
 		miroslav.append_user("data/users.txt"); */
-	User tiho{"tiho", "tiho", true, 6, {"nikola"}, {"igor"}, {"miroslav"}};
 
 	//	tiho.update_password("nikola");
 	//	tiho.login();
