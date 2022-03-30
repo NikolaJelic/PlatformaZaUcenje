@@ -1,0 +1,10 @@
+name=math
+code=101
+credits=8
+department=2
+rules=2|0|8
+teachers=marko|nikola
+students=igor|stefan
+pending=
+graduates=|tiho
+=====

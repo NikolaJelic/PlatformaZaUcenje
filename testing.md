@@ -7,11 +7,10 @@
   - [x] generate chat name
 
 
-- [ ] USERS
+- [x] USERS
   - [x] create new user
   - [x] append user to file
-  - [ ] update specific user
-  - [ ] update multiple users
+  - [x] update specific user
   - [x] send friend request
     - [x]  to valid user
     - [x]  to a friend
@@ -24,51 +23,48 @@
     - [x] file contains invalid users
     - [x] user doesn't have arrays
     - [x] user has arrays
-  - [ ] send message
+  - [x] send message
     - [x] to friend 
     - [ ] to teacher
     - [ ] to a teacher that is a friend
-  - [ ] enroll into course
-  - [ ] update password (nothing else can be updated)
-  - [ ] login 
-    - [ ] as user
-    - [ ] as admin
-    - [ ] as root (add default password)
-  
+  - [x] enroll into course
+  - [x] update password (nothing else can be updated)
+  - [x] login 
+    - [x] as user
+    - [x] as admin
 - [ ] COURSES
-  - [ ] create new course + restrict to admins
-  - [ ] set teachers +  restrict to admins
-  - [ ] accept students + restrict to teachers
+  - [x] create new course + restrict to admins
+  - [x] set teachers +  restrict to admins
+  - [x] accept students + restrict to teachers
   - [ ] update course
     - [ ] file not found
     - [ ] course has errors
     - [ ] fields are empty
-  - [ ] read courses from file
-    - [ ] file not found
-    - [ ] file empty
-    - [ ] file corrupted/courses have bad info
+  - [x] read courses from file
+    - [x] file not found
+    - [x] file empty
+    - [x] file corrupted/courses have bad info
     - [ ] compare courses +  pass a flag for comparison value (enrolled or graduates)
-    - [ ] ***Check which aproval function is the proper one***
-  - [ ] Check rules for enrolling
-    - [ ] add new rules 
-    - [ ] assign a rule to the course
-    - [ ] edit rules in code
-    - [ ] what happens to the existing courses if a new rule is added
-    - [ ] enable adding new rules to existing courses
-
-- [ ] Messages
-  - [ ] read messages
-    - [ ]  no file found 
-    - [ ]  file is empty
-    - [ ]  messages are corrupt
-  - [ ] write a new message 
-    - [ ] person isn't a friend 
-    - [ ] is first message in chat
-  - [ ] send message
-  - [ ] read chat
-  - [ ] display chat (empty?)
-  - [ ] display inbox
-  - [ ] display eligable receivers for a message
-  - [ ] search and filter messages by keyword
-    - [ ] no message is find
-    - [ ] multiple messages from different users   
+    - [x] ***Check which aproval function is the proper one***
+  - [x] Check rules for enrolling
+    - [x] add new rules 
+    - [x] assign a rule to the course
+    - [x] edit rules in code
+    - [x] what happens to the existing courses if a new rule is added
+    - [x] enable adding new rules to existing courses
+- [x] Messages
+  - [x] read messages
+    - [x]  no file found 
+    - [x]  file is empty
+    - [x]  messages are corrupt
+  - [x] write a new message 
+    - [x] person isn't a friend 
+    - [x] is first message in chat
+  - [x] send message
+  - [x] read chat
+  - [x] display chat (empty?)
+  - [x] display inbox
+  - [x] display eligable receivers for a message
+  - [x] search and filter messages by keyword
+    - [x] no message is find
+    - [x] multiple messages from different users   
