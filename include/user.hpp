@@ -10,20 +10,6 @@
 #include "message.hpp"
 #include "util.hpp"
 
-// data for super user who can add new admins and create new courses and users
-struct root {
-	std::string username = "root";
-	std::string password = "root";
-};
-
-// DONE User creation
-// DONE Set admin
-// DONE	User login
-// DONE Course creation
-// DONE Set course filter
-// TODO Make Graph
-// TODO Create screens
-
 class User {
 	std::string username{}; // must be unique
 	std::string password{};

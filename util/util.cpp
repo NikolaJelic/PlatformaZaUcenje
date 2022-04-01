@@ -1,8 +1,4 @@
 #include "util.hpp"
-#include <chrono>
-#include <cstddef>
-#include <filesystem>
-#include <sstream>
 
 // TODO throw exceptions instead of printing errors
 
@@ -70,10 +66,10 @@ std::vector<std::string> util::parse_list(std::string list, char delim) {
 	size_t start{}, end{};
 	while (end <= list.length()) {
 		if (list[end] == delim) {
-			ret.push_back(list.substr(start, end - start));
+			if (!list.substr(start, end - start).empty()) ret.push_back(list.substr(start, end - start));
 			start = end + 1;
 		} else if (end == list.length()) {
-			ret.push_back(list.substr(start, end - start));
+			if (!list.substr(start, end - start).empty()) ret.push_back(list.substr(start, end - start));
 		}
 		++end;
 	}

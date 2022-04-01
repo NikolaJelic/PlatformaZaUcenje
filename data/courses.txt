@@ -1,10 +1,20 @@
-name=math
+name=programiranje 1
+code=100
+credits=7
+department=1
+rules=0|0|0
+teachers=nikola|root
+students=
+pending=root
+graduates=tihomir
+=====
+name=diskretna matematika
 code=101
-credits=8
-department=2
-rules=2|0|8
-teachers=marko|nikola
-students=igor|stefan
+credits=6
+department=0
+rules=0|0|0
+teachers=
+students=
 pending=
-graduates=|tiho
+graduates=
 =====

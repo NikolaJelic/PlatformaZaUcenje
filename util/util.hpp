@@ -28,6 +28,7 @@ template <typename T>
 int enum_to_int(T const& t) {
 	return static_cast<int>(t);
 }
+
 void print_list(std::vector<std::string> const& list);
 std::vector<std::string> get_lines(const std::string& path);
 std::string_view trim_whitespace(std::string_view str);

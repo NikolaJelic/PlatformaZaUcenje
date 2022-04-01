@@ -8,8 +8,6 @@
 #include <vector>
 #include "util.hpp"
 
-// Needs to be moved to Utils
-
 struct Rules {
 	size_t num_of_courses_passed{};
 	std::set<std::string> required_courses{};
@@ -34,7 +32,6 @@ enum class Comparison {
 	difference,
 };
 
-// all courses are stored in data/courses.txt
 class Course {
 	std::string name{};
 	std::string code{};

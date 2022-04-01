@@ -1,13 +1,4 @@
 #include "user.hpp"
-#include <cstddef>
-#include <cstdio>
-#include <exception>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <string>
-#include <vector>
 #include "course.hpp"
 #include "util.hpp"
 
@@ -33,10 +24,16 @@ std::ostream& operator<<(std::ostream& os, User const& user) {
 	os << "password=" << user.password << '\n';
 	os << "admin=" << user.admin << '\n';
 	os << "grades=";
-	for (size_t i = 0; i < user.grades.size() - 1; ++i) {
-		os << user.grades[i].first << ',' << user.grades[i].second << '|';
+	if (user.grades.size() > 0) {
+
+		for (size_t i = 0; i < user.grades.size() - 1; ++i) {
+			os << user.grades[i].first << ',' << user.grades[i].second << '|';
+		}
+		os << user.grades[user.grades.size() - 1].first << ',' << user.grades[user.grades.size() - 1].second
+		   << std::endl;
+	} else {
+		os << '\n';
 	}
-	os << user.grades[user.grades.size() - 1].first << ',' << user.grades[user.grades.size() - 1].second << std::endl;
 	os << "friends=";
 	util::write_array(os, user.friends);
 	os << "friends_pending=";
@@ -67,7 +64,9 @@ void User::create_user() {
 	auto users = read_users("data/users.txt");
 	while (unique == false) {
 		std::cout << "Username(must be unique): ";
-		std::cin >> username;
+		std::cin.ignore();
+
+		std::getline(std::cin, username);
 		unique = !user_exists(users, username);
 		if (!unique) {
 			std::cout << "\n Username must be unique!\n";
@@ -332,6 +331,7 @@ bool User::can_enroll(Course const& course) const {
 	bool min_grade = true;
 	bool req_courses = true; // sets to false if it isn't found
 	auto rules = course.get_rules();
+	std::cout << rules.num_of_courses_passed << rules.required_courses.size() << rules.average_grade;
 	if (rules.num_of_courses_passed > 0) {
 
 		if (grades.size() < rules.num_of_courses_passed) {
@@ -355,6 +355,6 @@ bool User::can_enroll(Course const& course) const {
 			}
 		}
 	}
-
+	if (!(num_courses && min_grade && req_courses)) std::cout << "Requirements not met.\n";
 	return (num_courses && min_grade && req_courses);
 }

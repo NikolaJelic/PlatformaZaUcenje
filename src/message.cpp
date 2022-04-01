@@ -1,6 +1,5 @@
 #include "message.hpp"
-#include <filesystem>
-#include <fstream>
+
 #include "util.hpp"
 
 Message::Message(std::string sender, std::string time, std::string message)
@@ -97,7 +96,7 @@ void Message::display_inbox(std::string const& username) const {
 std::vector<std::string> Message::read_chats(std::string const& username) {
 	std::vector<std::string> ret{};
 	for (auto const& file : std::filesystem::directory_iterator("data/inbox")) {
-		if (file.path().filename().generic_string().find(username)) {
+		if (file.path().filename().generic_string().find(username) != std::string::npos) {
 			ret.push_back(file.path().filename().generic_string());
 		}
 	}

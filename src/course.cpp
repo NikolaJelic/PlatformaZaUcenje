@@ -1,9 +1,4 @@
 #include "course.hpp"
-#include <algorithm>
-#include <cstddef>
-#include <fstream>
-#include <string>
-#include <vector>
 #include "util.hpp"
 
 Course::Course(std::string name, std::string code, std::size_t credits, Department department, Rules rules,
@@ -111,7 +106,9 @@ void Course::create_course(bool is_admin) {
 		std::vector<std::string> conditions{};
 
 		std::cout << "Course name: ";
-		std::cin >> name;
+		std::cin.ignore();
+
+		std::getline(std::cin, name);
 		std::cout << "Course code (3 digit number): ";
 		std::cin >> code;
 		std::cout << "Credits (integer): ";
@@ -121,7 +118,6 @@ void Course::create_course(bool is_admin) {
 		size_t dp{};
 		std::cin >> dp;
 		department = static_cast<Department>(dp);
-		// TODO print rules
 		rules.input_rule();
 
 		Course new_course{name, code, credits, department, rules, {}, {}, {}, {}};
@@ -208,7 +204,7 @@ void Rules::read_rules(std::string const& str) {
 	}
 	num_of_courses_passed = std::stoi(rules_string[0]);
 	auto temp = util::parse_list(rules_string[1], ',');
-	required_courses = {temp.begin(), temp.end()};
+	if (temp.size() > 1 && temp[0] != "0") required_courses = {temp.begin(), temp.end()};
 	average_grade = std::stoi(rules_string[2]);
 }
 
@@ -226,8 +222,7 @@ void Rules::input_rule() {
 		switch (selection) {
 		case 0: return; break;
 		case 1: std::cin >> num_of_courses_passed; break;
-		case 2: // TODO BREAK INTO SMALLER FUNCTIONS
-		{
+		case 2: {
 			auto courses = Course::read_courses("data/courses.txt");
 			for (auto const& course : courses) {
 				std::cout << course.get_name() << " : " << course.get_code() << std::endl;
