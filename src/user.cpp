@@ -1,15 +1,17 @@
 #include "user.hpp"
+
+#include <utility>
 #include "course.hpp"
 #include "util.hpp"
 
 User::User(std::string username, std::string password, bool is_admin,
 		   std::vector<std::pair<std::string, size_t>> grades, std::vector<std::string> friends,
 		   std::vector<std::string> friends_pending, std::vector<std::string> sent_requests)
-	: username(std::move(username)), password(std::move(password)), admin(is_admin), grades(grades),
+	: username(std::move(username)), password(std::move(password)), admin(is_admin), grades(std::move(grades)),
 	  friends(std::move(friends)), friends_pending(std::move(friends_pending)),
 	  sent_requests(std::move(sent_requests)) {}
 
-void User::append_user(std::string const& path) {
+void User::append_user(std::string const& path) const {
 	if (auto file = std::fstream(path, std::ios::app)) {
 		file << *this;
 		file << "=====\n";
@@ -24,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, User const& user) {
 	os << "password=" << user.password << '\n';
 	os << "admin=" << user.admin << '\n';
 	os << "grades=";
-	if (user.grades.size() > 0) {
+	if (!user.grades.empty()) {
 
 		for (size_t i = 0; i < user.grades.size() - 1; ++i) {
 			os << user.grades[i].first << ',' << user.grades[i].second << '|';
@@ -60,9 +62,9 @@ void User::create_user() {
 
 	bool unique = false;
 
-	// load username until a unieuqe one has been entered
+	// load username until a unique one has been entered
 	auto users = read_users("data/users.txt");
-	while (unique == false) {
+	while (!unique) {
 		std::cout << "Username(must be unique): ";
 		std::cin.ignore();
 
@@ -84,7 +86,7 @@ void User::delete_user(std::string const& username) {
 		auto users = read_users("data/users.txt");
 
 		if (user_exists(users, username)) {
-			auto match_username = [username](User usr) { return usr.username == username; };
+			auto match_username = [username](const User& usr) { return usr.username == username; };
 			users.erase(std::find_if(users.begin(), users.end(), match_username));
 		}
 		for (auto& user : users) {
@@ -145,10 +147,10 @@ std::vector<User> User::read_users(std::string const& path) {
 			for (auto const& g : grade_list) {
 				if (!g.empty()) {
 					auto temp = util::parse_list(g, ',');
-					grades.push_back({temp[0], std::stoi(temp[1])});
+					grades.emplace_back(temp[0], std::stoi(temp[1]));
 				}
 			}
-			users.push_back({username, password, admin, grades, friends, friends_pending, sent_requests});
+			users.emplace_back(username, password, admin, grades, friends, friends_pending, sent_requests);
 		} else {
 			user = {};
 		}
@@ -230,10 +232,10 @@ std::vector<std::string> User::list_teachers() const {
 	std::vector<Course> courses = Course::read_courses("data/courses.txt");
 	std::set<std::string> unq_teachers{};
 
-	for (auto course : courses) {
+	for (const auto& course : courses) {
 		if (std::find(course.get_students().begin(), course.get_students().end(), username) !=
 			course.get_students().end()) {
-			for (auto teacher : course.get_teachers()) {
+			for (const auto& teacher : course.get_teachers()) {
 				unq_teachers.insert(teacher);
 			}
 		}
@@ -284,7 +286,7 @@ void User::login() {
 	std::string username{}, password{};
 	auto users = read_users("data/users.txt");
 	bool is_valid = false;
-	while (!is_valid) {
+	while (true) {
 		std::cin >> username;
 		if (username == "0") {
 			std::cout << "Login failed.\n";
@@ -296,7 +298,7 @@ void User::login() {
 					std::cin >> password;
 					if (user.password == password) {
 						*this = user;
-						std::cout << "Login sucessfull.\n";
+						std::cout << "Login successful.\n";
 						return;
 					} else {
 						std::cout << "Incorrect password.\n";

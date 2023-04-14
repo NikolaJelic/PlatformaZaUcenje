@@ -19,8 +19,6 @@ class User {
 	std::vector<std::string> friends_pending{};			  // list of friend requests that the user has to answer
 	std::vector<std::string> sent_requests{};			  // list of friend requests that the user has sent
 
-	std::string get_recipient(std::string chat) const;
-
   public:
 	User() = default;
 	User(std::string username, std::string password, bool is_admin, std::vector<std::pair<std::string, size_t>> grades,
@@ -28,14 +26,14 @@ class User {
 		 std::vector<std::string> sent_requests);
 
 	static bool user_exists(std::vector<User> const& users, std::string const& username);
-	std::vector<std::string> list_teachers() const;
-	void append_user(std::string const& path);
-	std::string get_username() const { return username; }
-	bool is_admin() const { return admin; }
-	std::vector<std::string> get_friends() const { return friends; }
-	std::vector<std::string> get_sent_requests() const { return sent_requests; }
-	std::vector<std::string> get_friends_pending() const { return friends_pending; }
-	void add_grade(std::pair<std::string, size_t> grade) { grades.push_back(grade); }
+	[[nodiscard]] std::vector<std::string> list_teachers() const;
+	void append_user(std::string const& path) const;
+	[[nodiscard]] std::string get_username() const { return username; }
+	[[nodiscard]] bool is_admin() const { return admin; }
+	[[nodiscard]] std::vector<std::string> get_friends() const { return friends; }
+	[[nodiscard]] std::vector<std::string> get_sent_requests() const { return sent_requests; }
+	[[nodiscard]] std::vector<std::string> get_friends_pending() const { return friends_pending; }
+	void add_grade(const std::pair<std::string, size_t>& grade) { grades.push_back(grade); }
 
 	static std::vector<User> read_users(std::string const& path);
 	static void create_user();
@@ -48,7 +46,7 @@ class User {
 
 	void send_friend_request(std::string const& username);
 	void accept_user(std::string const& username);
-	bool can_enroll(Course const& course) const;
+	[[nodiscard]] bool can_enroll(Course const& course) const;
 
 	void chat(std::string const& receiver);
 	bool is_contained(std::string const& user, std::vector<std::string> const& list);
@@ -56,7 +54,7 @@ class User {
 
 	bool set_admin(std::string const& username, bool new_state);
 	void update_password(std::string const& username);
-	double calculate_grade() const;
+	[[nodiscard]] double calculate_grade() const;
 
 	friend std::ostream& operator<<(std::ostream& os, User const& user);
 	friend std::ifstream& operator>>(std::ifstream& in, User const& user);

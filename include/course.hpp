@@ -5,6 +5,7 @@
 #include <fstream>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 #include "util.hpp"
 
@@ -52,20 +53,20 @@ class Course {
 		   std::vector<std::string> teachers, std::vector<std::string> students,
 		   std::vector<std::string> pending_students, std::vector<std::string> graduates);
 
-	std::string get_name() const { return name; }
-	std::string get_code() const { return code; }
-	std::vector<std::string> get_teachers() const { return teachers; }
-	std::vector<std::string> get_students() const { return students; }
-	std::vector<std::string> get_pending() const { return pending; }
-	std::vector<std::string> get_graduates() const { return graduates; }
-	Rules get_rules() const { return rules; }
+	[[nodiscard]] std::string get_name() const { return name; }
+	[[nodiscard]] std::string get_code() const { return code; }
+	[[nodiscard]] std::vector<std::string> get_teachers() const { return teachers; }
+	[[nodiscard]] std::vector<std::string> get_students() const { return students; }
+	[[nodiscard]] std::vector<std::string> get_pending() const { return pending; }
+	[[nodiscard]] std::vector<std::string> get_graduates() const { return graduates; }
+	[[nodiscard]] Rules get_rules() const { return rules; }
 
-	void set_teachers(std::vector<std::string> other) { teachers = other; }
-	void set_students(std::vector<std::string> other) { students = other; }
-	void set_pending(std::vector<std::string> other) { pending = other; }
-	void set_graduates(std::vector<std::string> other) { graduates = other; }
+	void set_teachers(std::vector<std::string> other) { teachers = std::move(other); }
+	void set_students(std::vector<std::string> other) { students = std::move(other); }
+	void set_pending(std::vector<std::string> other) { pending = std::move(other); }
+	void set_graduates(std::vector<std::string> other) { graduates = std::move(other); }
 
-	void append_course(std::string const& path);
+	void append_course(std::string const& path) const;
 	static void create_course(bool is_admin);
 	static void delete_course(std::string const& code);
 	void update_course(std::string const& path);

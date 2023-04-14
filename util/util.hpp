@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 namespace util {
 
 template <typename T>

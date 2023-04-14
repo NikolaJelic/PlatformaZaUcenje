@@ -74,7 +74,7 @@ std::vector<Message> Message::filter(std::string const& key, std::string const& 
 	std::vector<Message> messages{};
 	std::vector<Message> ret{};
 	for (auto const& chat : chats) {
-		auto messages = read_messages("data/inbox/" + chat);
+		messages = read_messages("data/inbox/" + chat);
 
 		for (auto const& msg : messages) {
 			if (msg.message.find(key) != std::string::npos) {
@@ -108,7 +108,7 @@ std::string Message::get_recipient(std::string chat, std::string const& username
 	if (pos != std::string::npos) {
 		chat.erase(pos, username.length());
 	}
-	pos = chat.find("_");
+	pos = chat.find('_');
 	if (pos != std::string::npos) {
 		chat.erase(pos, 1);
 	}

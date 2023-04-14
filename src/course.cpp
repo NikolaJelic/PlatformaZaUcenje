@@ -1,10 +1,12 @@
 #include "course.hpp"
+
+#include <utility>
 #include "util.hpp"
 
 Course::Course(std::string name, std::string code, std::size_t credits, Department department, Rules rules,
 			   std::vector<std::string> teachers, std::vector<std::string> students, std::vector<std::string> pending,
 			   std::vector<std::string> graduates)
-	: name(name), code(code), credits(credits), department(department), rules(std::move(rules)),
+	: name(std::move(name)), code(std::move(code)), credits(credits), department(department), rules(std::move(rules)),
 	  teachers(std::move(teachers)), students(std::move(students)), pending(std::move(pending)),
 	  graduates(std::move(graduates)) {}
 
@@ -76,7 +78,7 @@ std::vector<Course> Course::read_courses(std::string const& path) {
 			graduates = util::parse_list(str, '|');
 			util::extract_map(temp, "department", str);
 			department = static_cast<Department>(stoi(str));
-			courses.push_back({name, code, credits, department, rules, teachers, students, pending, graduates});
+			courses.emplace_back(name, code, credits, department, rules, teachers, students, pending, graduates);
 		} else {
 			course = {};
 		}
@@ -129,7 +131,7 @@ void Course::create_course(bool is_admin) {
 	}
 }
 
-void Course::append_course(std::string const& path) {
+void Course::append_course(std::string const& path) const {
 	if (auto file = std::fstream(path, std::ios::app)) {
 		file << *this;
 		file << "=====\n";
@@ -183,11 +185,11 @@ std::ostream& operator<<(std::ostream& os, Course const& course) {
 
 std::ostream& operator<<(std::ostream& os, Rules const& rules) {
 	os << rules.num_of_courses_passed << "|";
-	if (rules.required_courses.size() == 0) {
+	if (rules.required_courses.empty()) {
 		os << "0|";
 	} else {
 		size_t i{};
-		for (auto r : rules.required_courses) {
+		for (const auto& r : rules.required_courses) {
 			os << r << ((i++ < rules.required_courses.size() - 1) ? "," : "");
 		}
 		os << "|";
@@ -220,7 +222,7 @@ void Rules::input_rule() {
 		std::cout << "3. Minimum average grade:\n";
 		std::cin >> selection;
 		switch (selection) {
-		case 0: return; break;
+		case 0: return;
 		case 1: std::cin >> num_of_courses_passed; break;
 		case 2: {
 			auto courses = Course::read_courses("data/courses.txt");
@@ -263,7 +265,7 @@ void Course::delete_course(std::string const& code) {
 	auto courses = read_courses("data/courses.txt");
 
 	if (course_exists(code)) {
-		auto match_code = [code](Course course) { return course.code == code; };
+		auto match_code = [code](const Course& course) { return course.code == code; };
 		courses.erase(std::find_if(courses.begin(), courses.end(), match_code));
 	}
 	write_courses(courses, "data/courses.txt");
@@ -293,20 +295,20 @@ void Course::write_courses(std::vector<Course> const& courses, std::string const
 std::pair<std::string, size_t> Course::pass_student(std::string const& username) {
 	auto it = std::find(students.begin(), students.end(), username);
 	if (it != students.end()) {
-		std::cout << "Input studen't grade[6 - 10]: ";
+		std::cout << "Input student grade[6 - 10]: ";
 		size_t grade{};
 		std::cin >> grade;
 		if (grade >= 6 && grade <= 10) {
 			students.erase(it);
 			graduates.push_back(username);
 			update_course("data/courses.txt");
-			std::cout << "Studen't passed " << name << " with " << grade << ".\n";
+			std::cout << "Student passed " << name << " with " << grade << ".\n";
 			return {code, grade};
 		} else {
 			return {code, 0};
 		}
 	} else {
-		std::cout << "Studen't not found.\n";
+		std::cout << "Student not found.\n";
 	}
 	return {code, 0};
 }

@@ -63,7 +63,7 @@ void Screen::users() {
 	} break;
 	case 4: {
 		if (current_user.is_admin()) {
-			current_user.create_user();
+			User::create_user();
 			break;
 		}
 	}
@@ -94,7 +94,7 @@ void Screen::users() {
 			std::cout << "Input username you want to delete[empty string for quit selection]:";
 			std::cin >> username;
 			if (!username.empty()) {
-				current_user.delete_user(username);
+				User::delete_user(username);
 			}
 		}
 	} break;
@@ -132,7 +132,7 @@ void Screen::courses() {
 	case 3: {
 		viewed_course.list_courses();
 		std::string code{};
-		std::cout << "Input course code you want to atend[empty string for quit selection]:";
+		std::cout << "Input course code you want to attend[empty string for quit selection]:";
 		std::cin >> code;
 		if (!code.empty()) {
 			auto courses = Course::read_courses("data/courses.txt");
@@ -243,13 +243,13 @@ void Screen::courses() {
 			bool graduated = option;
 			switch (selection) {
 			case 1:
-				util::print_list(viewed_course.compare(code_first, code_second, Comparison::group_union, graduated));
+				util::print_list(Course::compare(code_first, code_second, Comparison::group_union, graduated));
 				break;
 			case 2:
-				util::print_list(viewed_course.compare(code_first, code_second, Comparison::intersection, graduated));
+				util::print_list(Course::compare(code_first, code_second, Comparison::intersection, graduated));
 				break;
 			case 3:
-				util::print_list(viewed_course.compare(code_first, code_second, Comparison::difference, graduated));
+				util::print_list(Course::compare(code_first, code_second, Comparison::difference, graduated));
 				break;
 			}
 		}
@@ -283,7 +283,7 @@ void Screen::courses() {
 							for (auto& user : users) {
 								if (user.get_username() == username) {
 									user.add_grade(grade);
-									user.write_users(users, "data/users.txt");
+									User::write_users(users, "data/users.txt");
 								}
 							}
 						}
@@ -331,10 +331,10 @@ void Screen::messages() {
 	} break;
 	case 3: {
 		std::string key{};
-		std::cout << "Input keywoard you want to search for: ";
+		std::cout << "Input keyword you want to search for: ";
 		std::cin >> key;
 		if (!key.empty()) {
-			temp_message.search(key, current_user.get_username());
+			Message::search(key, current_user.get_username());
 		}
 	} break;
 	}

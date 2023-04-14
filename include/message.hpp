@@ -21,11 +21,11 @@ class Message {
 	static void send_message(std::string const& sender, std::string const& receiver);
 	void write_message(std::string const& sender);
 	// takes the path of the chat log
-	static void print_chat(std::string const& chat);
+	[[maybe_unused]] static void print_chat(std::string const& chat);
 	static std::vector<std::string> read_chats(std::string const& username);
 	void display_inbox(std::string const& username) const;
 	void show_chat(std::string const& path);
-	std::string get_recipient(std::string chat, std::string const& username) const;
+	[[nodiscard]] std::string get_recipient(std::string chat, std::string const& username) const;
 	static std::vector<Message> filter(std::string const& key, std::string const& username);
 	static void search(std::string const& key, std::string const& username);
 	friend std::ostream& operator<<(std::ostream& os, Message const& message);
